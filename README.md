@@ -13,14 +13,29 @@ A minimalist local chat app for LLMs. Rust (Axum) backend, SvelteKit frontend.
 
 ## Quick start (Docker)
 
+The Compose stack includes **Ollama with NVIDIA GPU access by default** (`gpus: all`). Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) and configure Docker before starting:
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi   # verify GPU access
+```
+
 ```bash
 docker compose up --build
 ```
 
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8080
+- Ollama: http://localhost:11434 (GPU-accelerated when NVIDIA drivers are available)
 
-Ensure [Ollama](https://ollama.com) is running locally. From Docker, the default Ollama URL in settings should be `http://host.docker.internal:11434`.
+On a machine without a GPU, use the CPU override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build
+```
+
+Pull a model after the stack is up, for example: `docker compose exec ollama ollama pull llama3.2`
 
 ## Development
 

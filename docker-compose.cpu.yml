@@ -1,0 +1,5 @@
+# CPU-only override when no NVIDIA GPU / Container Toolkit is available.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build
+services:
+  ollama:
+    gpus: []
