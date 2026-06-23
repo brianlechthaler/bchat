@@ -263,7 +263,9 @@ where
         "MCP session initialized"
     );
 
-    session.notify("notifications/initialized", json!({})).await?;
+    session
+        .notify("notifications/initialized", json!({}))
+        .await?;
 
     let result = action(session).await;
     if let Err(e) = &result {
@@ -313,9 +315,6 @@ mod tests {
         let result = call_tool(&server, "echo", json!({ "text": "hello" }))
             .await
             .expect("call");
-        assert_eq!(
-            result["content"][0]["text"].as_str(),
-            Some("echo: hello")
-        );
+        assert_eq!(result["content"][0]["text"].as_str(), Some("echo: hello"));
     }
 }
