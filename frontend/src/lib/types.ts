@@ -42,6 +42,8 @@ export interface StreamChunk {
 	done: boolean;
 }
 
+export const DEFAULT_SYSTEM_PROMPT = '';
+
 export const DEFAULT_SETTINGS: AppSettings = {
 	provider: 'ollama',
 	ollamaUrl: 'http://localhost:11434',
@@ -52,10 +54,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
 		temperature: 0.7,
 		maxTokens: 2048,
 		topP: 1,
-		systemPrompt: ''
+		systemPrompt: DEFAULT_SYSTEM_PROMPT
 	},
 	darkMode: true
 };
+
+export function effectiveSystemPrompt(prompt: string): string {
+	return prompt.trim() === '' ? DEFAULT_SYSTEM_PROMPT : prompt;
+}
 
 export function createEndpoint(name = 'OpenAI'): OpenAiEndpoint {
 	return {

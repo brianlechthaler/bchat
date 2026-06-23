@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { AppSettings } from '$lib/types';
+	import { DEFAULT_SYSTEM_PROMPT } from '$lib/types';
 
 	interface Props {
 		initialDraft: AppSettings;
@@ -107,8 +108,34 @@
 
 			<label>
 				System prompt
-				<textarea bind:value={draft.llm.systemPrompt} rows="3"></textarea>
+				<textarea
+					bind:value={draft.llm.systemPrompt}
+					rows="3"
+					placeholder="Leave empty to use the default (no system message)"
+				></textarea>
 			</label>
+
+			<div class="settings-hint" data-testid="system-prompt-preview">
+				<div>
+					<strong>Current:</strong>
+					{draft.llm.systemPrompt.trim() === ''
+						? 'Using default (no system message sent to the model)'
+						: draft.llm.systemPrompt}
+				</div>
+				<div>
+					<strong>Default:</strong>
+					{DEFAULT_SYSTEM_PROMPT.trim() === ''
+						? '(empty — no system message)'
+						: DEFAULT_SYSTEM_PROMPT}
+				</div>
+				<button
+					type="button"
+					class="ghost-btn"
+					onclick={() => (draft.llm.systemPrompt = DEFAULT_SYSTEM_PROMPT)}
+				>
+					Reset to default
+				</button>
+			</div>
 
 			<label>
 				Temperature ({draft.llm.temperature})
