@@ -13,7 +13,6 @@
 	import {
 		createConversation,
 		createEndpoint,
-		createMcpServer,
 		normalizeAppSettings,
 		type AppSettings,
 		type Conversation
@@ -328,19 +327,6 @@
 					endpoints: settingsDraft.endpoints.filter((e) => e.id !== id),
 					selectedEndpointId:
 						settingsDraft.selectedEndpointId === id ? '' : settingsDraft.selectedEndpointId
-				};
-			}}
-			onAddMcpServer={() => {
-				const server = createMcpServer(`MCP ${settingsDraft.mcpServers.length + 1}`);
-				settingsDraft = {
-					...settingsDraft,
-					mcpServers: [...settingsDraft.mcpServers, server]
-				};
-			}}
-			onDeleteMcpServer={(id) => {
-				settingsDraft = {
-					...settingsDraft,
-					mcpServers: settingsDraft.mcpServers.filter((s) => s.id !== id)
 				};
 			}}
 			onRefreshModels={refreshModels}

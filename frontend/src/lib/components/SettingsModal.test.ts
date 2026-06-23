@@ -20,8 +20,6 @@ describe('SettingsModal', () => {
 				onClose,
 				onAddEndpoint: vi.fn(),
 				onDeleteEndpoint: vi.fn(),
-				onAddMcpServer: vi.fn(),
-				onDeleteMcpServer: vi.fn(),
 				onRefreshModels: vi.fn().mockResolvedValue(undefined)
 			}
 		});
@@ -48,8 +46,6 @@ describe('SettingsModal', () => {
 				onClose: vi.fn(),
 				onAddEndpoint: vi.fn(),
 				onDeleteEndpoint: vi.fn(),
-				onAddMcpServer: vi.fn(),
-				onDeleteMcpServer: vi.fn(),
 				onRefreshModels: vi.fn().mockResolvedValue(undefined)
 			}
 		});
@@ -72,8 +68,6 @@ describe('SettingsModal', () => {
 				onClose: vi.fn(),
 				onAddEndpoint: vi.fn(),
 				onDeleteEndpoint: vi.fn(),
-				onAddMcpServer: vi.fn(),
-				onDeleteMcpServer: vi.fn(),
 				onRefreshModels: vi.fn().mockResolvedValue(undefined)
 			}
 		});
@@ -90,5 +84,25 @@ describe('SettingsModal', () => {
 		expect(dialog.querySelector('[data-testid="system-prompt-preview"]')).toHaveTextContent(
 			'Using default (no system message sent to the model)'
 		);
+	});
+
+	it('adds an MCP server row when Add server is clicked', async () => {
+		render(SettingsModal, {
+			props: {
+				initialDraft: structuredClone(DEFAULT_SETTINGS),
+				models: ['llama3'],
+				onSave: vi.fn(),
+				onClose: vi.fn(),
+				onAddEndpoint: vi.fn(),
+				onDeleteEndpoint: vi.fn(),
+				onRefreshModels: vi.fn().mockResolvedValue(undefined)
+			}
+		});
+
+		expect(screen.queryByLabelText(/^Name$/i)).not.toBeInTheDocument();
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Add server' }));
+
+		expect(screen.getByDisplayValue('MCP 1')).toBeInTheDocument();
 	});
 });

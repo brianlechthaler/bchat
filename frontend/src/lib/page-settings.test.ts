@@ -37,4 +37,13 @@ describe('page settings', () => {
 
 		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 	});
+
+	it('adds an MCP server row from settings', async () => {
+		render(Page);
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Add server' }));
+
+		expect(screen.getByDisplayValue('MCP 1')).toBeInTheDocument();
+	});
 });
