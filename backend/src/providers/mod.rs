@@ -26,9 +26,7 @@ pub async fn stream_chat(
     openai: Option<&OpenAiEndpoint>,
 ) -> Result<reqwest::Response, AppError> {
     match provider {
-        Provider::Ollama => {
-            ollama::stream_chat(ollama_url, model, messages, settings).await
-        }
+        Provider::Ollama => ollama::stream_chat(ollama_url, model, messages, settings).await,
         Provider::Openai => {
             let endpoint = openai.ok_or_else(|| {
                 AppError::BadRequest("openai endpoint configuration is required".into())
@@ -174,7 +172,10 @@ mod openai_compat {
         messages: &[ChatMessage],
         settings: &LlmSettings,
     ) -> Result<reqwest::Response, AppError> {
-        let url = format!("{}/chat/completions", endpoint.base_url.trim_end_matches('/'));
+        let url = format!(
+            "{}/chat/completions",
+            endpoint.base_url.trim_end_matches('/')
+        );
         let mut payload_messages: Vec<ChatMessage> = messages.to_vec();
         if !settings.system_prompt.is_empty() {
             payload_messages.insert(

@@ -13,9 +13,15 @@ concurrency:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
-      - run: docker run --rm -v ${{ github.workspace }}/backend:/workspace/backend -w /workspace/backend rust:1.88-bookworm bash -lc "rustup component add rustfmt && cargo fmt --check"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --check
 
   frontend:
     runs-on: ubuntu-latest

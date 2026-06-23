@@ -37,12 +37,8 @@ async fn models_post(
 }
 
 async fn fetch_models(query: ModelsQuery) -> Result<Json<ModelsResponse>, AppError> {
-    let models = providers::list_models(
-        &query.provider,
-        &query.ollama_url,
-        query.openai.as_ref(),
-    )
-    .await?;
+    let models =
+        providers::list_models(&query.provider, &query.ollama_url, query.openai.as_ref()).await?;
 
     Ok(Json(ModelsResponse { models }))
 }
@@ -176,10 +172,7 @@ fn parse_ollama_line(line: &str) -> Option<StreamChunk> {
     }
 
     let parsed: OllamaChunk = serde_json::from_str(line).ok()?;
-    let content = parsed
-        .message
-        .and_then(|m| m.content)
-        .unwrap_or_default();
+    let content = parsed.message.and_then(|m| m.content).unwrap_or_default();
     let done = parsed.done.unwrap_or(false);
     if content.is_empty() && !done {
         return None;
