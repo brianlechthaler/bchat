@@ -15,14 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          load: true
-          tags: bchat:backend
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - run: docker run --rm -v ${{ github.workspace }}/backend:/workspace/backend -w /workspace/backend rust:1.88-bookworm cargo test
+      - run: docker run --rm -v ${{ github.workspace }}/backend:/workspace -w /workspace rust:1.88-bookworm cargo test
 
   frontend:
     runs-on: ubuntu-latest

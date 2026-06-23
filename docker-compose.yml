@@ -24,10 +24,10 @@ services:
 
   test-backend:
     image: rust:1.88-bookworm
-    working_dir: /workspace/backend
+    working_dir: /workspace
     volumes:
-      - ./backend:/workspace/backend
-    command: bash -lc "cargo test"
+      - ./backend:/workspace
+    command: cargo test
 
   test-frontend:
     build:
