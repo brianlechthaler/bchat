@@ -51,13 +51,9 @@ describe('api', () => {
 	it('streamChat yields token speed from final chunk', async () => {
 		const body = new ReadableStream({
 			start(controller) {
+				controller.enqueue(new TextEncoder().encode('data: {"content":"hello","done":false}\n\n'));
 				controller.enqueue(
-					new TextEncoder().encode('data: {"content":"hello","done":false}\n\n')
-				);
-				controller.enqueue(
-					new TextEncoder().encode(
-						'data: {"content":"","done":true,"tokens_per_second":42.5}\n\n'
-					)
+					new TextEncoder().encode('data: {"content":"","done":true,"tokens_per_second":42.5}\n\n')
 				);
 				controller.close();
 			}
