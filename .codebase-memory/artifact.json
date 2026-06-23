@@ -1,0 +1,11 @@
+{
+    "schema_version": 1,
+    "commit": "549becbb6cf93b313d67d02c5e41d77e2cefccc7",
+    "indexed_at": "2026-06-23T06:23:00Z",
+    "project": "home-brian-Projects-bchat",
+    "nodes": 213,
+    "edges": 424,
+    "original_size": 1572864,
+    "compressed_size": 160777,
+    "compression_level": 9
+}
