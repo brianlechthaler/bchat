@@ -48,6 +48,27 @@ describe('api', () => {
 		]);
 	});
 
+	it('streamChat yields token speed from final chunk', async () => {
+		const body = new ReadableStream({
+			start(controller) {
+				controller.enqueue(new TextEncoder().encode('data: {"content":"hello","done":false}\n\n'));
+				controller.enqueue(
+					new TextEncoder().encode('data: {"content":"","done":true,"tokens_per_second":42.5}\n\n')
+				);
+				controller.close();
+			}
+		});
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body, { status: 200 }));
+
+		const chunks = [];
+		for await (const chunk of streamChat(DEFAULT_SETTINGS, [{ role: 'user', content: 'hi' }])) {
+			chunks.push(chunk);
+		}
+
+		expect(chunks[1]).toEqual({ content: '', done: true, tokens_per_second: 42.5 });
+	});
+
 	it('streamChat throws when response is not ok', async () => {
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
 			new Response(JSON.stringify({ error: 'bad request' }), { status: 400 })

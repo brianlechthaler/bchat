@@ -25,6 +25,7 @@
 		sortConversations
 	} from '$lib/conversations';
 	import { fetchModels, streamChat } from '$lib/api';
+	import { formatTokenSpeed, estimateTokensPerSecond } from '$lib/tokenSpeed';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
 
 	let settings = $state<AppSettings>(loadSettings());
@@ -36,6 +37,7 @@
 	let error = $state('');
 	let showSettings = $state(false);
 	let models = $state<string[]>([]);
+	let tokenSpeed = $state<number | null>(null);
 	let abortController: AbortController | null = null;
 
 	const sortedConversations = $derived(sortConversations(conversations));
@@ -151,7 +153,10 @@
 		error = '';
 		input = '';
 		streaming = true;
+		tokenSpeed = null;
 		abortController = new AbortController();
+		const streamStartedAt = performance.now();
+		let streamedChars = 0;
 
 		const userMessage = { role: 'user' as const, content: text };
 		let conversation: Conversation = {
@@ -176,6 +181,17 @@
 				conversation.messages.slice(0, -1),
 				abortController.signal
 			)) {
+				streamedChars += chunk.content.length;
+				const estimate = estimateTokensPerSecond(
+					streamedChars,
+					performance.now() - streamStartedAt
+				);
+				if (estimate != null) {
+					tokenSpeed = estimate;
+				}
+				if (chunk.tokens_per_second != null) {
+					tokenSpeed = chunk.tokens_per_second;
+				}
 				assistantMessage.content += chunk.content;
 				conversation = {
 					...conversation,
@@ -234,6 +250,9 @@
 				<div style="color: var(--text-muted); font-size: 0.85rem;">
 					{settings.provider === 'ollama' ? 'Ollama' : 'OpenAI-compatible'} · {settings.model ||
 						'no model'}
+					{#if tokenSpeed != null}
+						· {formatTokenSpeed(tokenSpeed)}
+					{/if}
 				</div>
 			</div>
 			<div style="display: flex; gap: 0.5rem;">
