@@ -12,7 +12,9 @@ use serde::Deserialize;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::error::AppError;
-use crate::models::{ChatRequest, ModelsQuery, ModelsResponse, Provider, StreamChunk};
+use crate::models::{
+    resolve_ollama_url, ChatRequest, ModelsQuery, ModelsResponse, Provider, StreamChunk,
+};
 use crate::providers;
 
 pub fn router() -> Router {
@@ -37,8 +39,9 @@ async fn models_post(
 }
 
 async fn fetch_models(query: ModelsQuery) -> Result<Json<ModelsResponse>, AppError> {
+    let ollama_url = resolve_ollama_url(&query.ollama_url);
     let models =
-        providers::list_models(&query.provider, &query.ollama_url, query.openai.as_ref()).await?;
+        providers::list_models(&query.provider, &ollama_url, query.openai.as_ref()).await?;
 
     Ok(Json(ModelsResponse { models }))
 }
@@ -48,12 +51,13 @@ async fn chat(
 ) -> Result<Sse<impl futures::Stream<Item = Result<Event, std::convert::Infallible>>>, AppError> {
     validate_chat_request(&request)?;
 
+    let ollama_url = resolve_ollama_url(&request.ollama_url);
     let response = providers::stream_chat(
         &request.provider,
         &request.model,
         &request.messages,
         &request.settings,
-        &request.ollama_url,
+        &ollama_url,
         request.openai.as_ref(),
     )
     .await?;
