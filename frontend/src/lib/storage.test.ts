@@ -8,7 +8,7 @@ import {
 	loadActiveId,
 	saveActiveId
 } from './storage';
-import { DEFAULT_SETTINGS, createConversation } from './types';
+import { DEFAULT_SETTINGS, createConversation, createEndpoint } from './types';
 
 describe('storage', () => {
 	beforeEach(() => {
@@ -59,5 +59,17 @@ describe('storage', () => {
 	it('returns fallback settings when stored json is invalid', () => {
 		localStorage.setItem('bchat.settings', '{bad');
 		expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
+	});
+
+	it('normalizes openai endpoint selection when loading persisted settings', () => {
+		const endpoint = createEndpoint('Remote');
+		const stored = {
+			...DEFAULT_SETTINGS,
+			provider: 'openai' as const,
+			endpoints: [endpoint],
+			selectedEndpointId: ''
+		};
+		localStorage.setItem('bchat.settings', JSON.stringify(stored));
+		expect(loadSettings().selectedEndpointId).toBe(endpoint.id);
 	});
 });

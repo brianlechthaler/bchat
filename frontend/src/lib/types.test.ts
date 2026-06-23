@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, createConversation, createEndpoint } from './types';
+import {
+	DEFAULT_SETTINGS,
+	createConversation,
+	createEndpoint,
+	normalizeAppSettings
+} from './types';
 
 describe('types', () => {
 	it('creates default settings with ollama provider', () => {
@@ -17,5 +22,21 @@ describe('types', () => {
 		const endpoint = createEndpoint('My API');
 		expect(endpoint.name).toBe('My API');
 		expect(endpoint.baseUrl).toContain('openai.com');
+	});
+
+	it('normalizes openai settings to select the first endpoint when none is selected', () => {
+		const endpoint = createEndpoint();
+		const settings = {
+			...DEFAULT_SETTINGS,
+			provider: 'openai' as const,
+			endpoints: [endpoint],
+			selectedEndpointId: ''
+		};
+
+		expect(normalizeAppSettings(settings).selectedEndpointId).toBe(endpoint.id);
+	});
+
+	it('leaves ollama settings unchanged during normalization', () => {
+		expect(normalizeAppSettings(DEFAULT_SETTINGS)).toEqual(DEFAULT_SETTINGS);
 	});
 });

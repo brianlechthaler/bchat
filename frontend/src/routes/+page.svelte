@@ -13,6 +13,7 @@
 	import {
 		createConversation,
 		createEndpoint,
+		normalizeAppSettings,
 		type AppSettings,
 		type Conversation
 	} from '$lib/types';
@@ -126,7 +127,7 @@
 	}
 
 	async function onSettingsSave(next: AppSettings) {
-		settings = next;
+		settings = normalizeAppSettings(next);
 		persistSettings();
 		showSettings = false;
 		await refreshModels();
@@ -292,13 +293,12 @@
 			onSave={onSettingsSave}
 			onClose={() => (showSettings = false)}
 			onAddEndpoint={() => {
-				settingsDraft = {
+				const endpoint = createEndpoint(`Endpoint ${settingsDraft.endpoints.length + 1}`);
+				settingsDraft = normalizeAppSettings({
 					...settingsDraft,
-					endpoints: [
-						...settingsDraft.endpoints,
-						createEndpoint(`Endpoint ${settingsDraft.endpoints.length + 1}`)
-					]
-				};
+					endpoints: [...settingsDraft.endpoints, endpoint],
+					selectedEndpointId: endpoint.id
+				});
 			}}
 			onDeleteEndpoint={(id) => {
 				settingsDraft = {
