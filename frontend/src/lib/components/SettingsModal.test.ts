@@ -20,6 +20,8 @@ describe('SettingsModal', () => {
 				onClose,
 				onAddEndpoint: vi.fn(),
 				onDeleteEndpoint: vi.fn(),
+				onAddMcpServer: vi.fn(),
+				onDeleteMcpServer: vi.fn(),
 				onRefreshModels: vi.fn().mockResolvedValue(undefined)
 			}
 		});
@@ -46,6 +48,8 @@ describe('SettingsModal', () => {
 				onClose: vi.fn(),
 				onAddEndpoint: vi.fn(),
 				onDeleteEndpoint: vi.fn(),
+				onAddMcpServer: vi.fn(),
+				onDeleteMcpServer: vi.fn(),
 				onRefreshModels: vi.fn().mockResolvedValue(undefined)
 			}
 		});
@@ -68,6 +72,8 @@ describe('SettingsModal', () => {
 				onClose: vi.fn(),
 				onAddEndpoint: vi.fn(),
 				onDeleteEndpoint: vi.fn(),
+				onAddMcpServer: vi.fn(),
+				onDeleteMcpServer: vi.fn(),
 				onRefreshModels: vi.fn().mockResolvedValue(undefined)
 			}
 		});

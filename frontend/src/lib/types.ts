@@ -19,12 +19,26 @@ export interface OpenAiEndpoint {
 	apiKey: string;
 }
 
+export interface McpServer {
+	id: string;
+	name: string;
+	command: string;
+	args: string[];
+}
+
+export interface McpTool {
+	name: string;
+	description?: string;
+	input_schema: Record<string, unknown>;
+}
+
 export interface AppSettings {
 	provider: Provider;
 	ollamaUrl: string;
 	model: string;
 	selectedEndpointId: string;
 	endpoints: OpenAiEndpoint[];
+	mcpServers: McpServer[];
 	llm: LlmSettings;
 	darkMode: boolean;
 }
@@ -51,6 +65,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	model: '',
 	selectedEndpointId: '',
 	endpoints: [],
+	mcpServers: [],
 	llm: {
 		temperature: 0.7,
 		maxTokens: 2048,
@@ -64,6 +79,15 @@ export function effectiveSystemPrompt(prompt: string): string {
 	return prompt.trim() === '' ? DEFAULT_SYSTEM_PROMPT : prompt;
 }
 
+export function createMcpServer(name = 'MCP Server'): McpServer {
+	return {
+		id: crypto.randomUUID(),
+		name,
+		command: '',
+		args: []
+	};
+}
+
 export function createEndpoint(name = 'OpenAI'): OpenAiEndpoint {
 	return {
 		id: crypto.randomUUID(),
@@ -75,16 +99,21 @@ export function createEndpoint(name = 'OpenAI'): OpenAiEndpoint {
 
 /** Ensure OpenAI provider has a valid selected endpoint when endpoints exist. */
 export function normalizeAppSettings(settings: AppSettings): AppSettings {
-	if (settings.provider !== 'openai' || settings.endpoints.length === 0) {
-		return settings;
+	const withDefaults: AppSettings = {
+		...settings,
+		mcpServers: settings.mcpServers ?? []
+	};
+
+	if (withDefaults.provider !== 'openai' || withDefaults.endpoints.length === 0) {
+		return withDefaults;
 	}
 
-	const hasSelection = settings.endpoints.some((e) => e.id === settings.selectedEndpointId);
+	const hasSelection = withDefaults.endpoints.some((e) => e.id === withDefaults.selectedEndpointId);
 	if (hasSelection) {
-		return settings;
+		return withDefaults;
 	}
 
-	return { ...settings, selectedEndpointId: settings.endpoints[0].id };
+	return { ...withDefaults, selectedEndpointId: withDefaults.endpoints[0].id };
 }
 
 export function createConversation(title = 'New chat'): Conversation {
