@@ -1,5 +1,13 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { loadSettings, saveSettings, applyTheme, loadHistory, saveHistory } from './storage';
+import {
+	loadSettings,
+	saveSettings,
+	applyTheme,
+	loadHistory,
+	saveHistory,
+	loadActiveId,
+	saveActiveId
+} from './storage';
 import { DEFAULT_SETTINGS, createConversation } from './types';
 
 describe('storage', () => {
@@ -30,6 +38,17 @@ describe('storage', () => {
 		const chat = createConversation('Saved');
 		saveHistory([chat]);
 		expect(loadHistory()[0]?.title).toBe('Saved');
+	});
+
+	it('persists and reloads the active conversation id', () => {
+		saveActiveId('chat-123');
+		expect(loadActiveId()).toBe('chat-123');
+	});
+
+	it('clears the active conversation id when empty', () => {
+		saveActiveId('chat-123');
+		saveActiveId('');
+		expect(loadActiveId()).toBe('');
 	});
 
 	it('returns empty history for invalid stored data', () => {

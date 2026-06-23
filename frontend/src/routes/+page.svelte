@@ -1,20 +1,35 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
-	import { applyTheme, loadHistory, loadSettings, saveHistory, saveSettings } from '$lib/storage';
+	import {
+		applyTheme,
+		loadActiveId,
+		loadHistory,
+		loadSettings,
+		saveActiveId,
+		saveHistory,
+		saveSettings
+	} from '$lib/storage';
 	import {
 		createConversation,
 		createEndpoint,
 		type AppSettings,
 		type Conversation
 	} from '$lib/types';
+	import {
+		deleteConversation,
+		ensureConversations,
+		resolveActiveConversation,
+		resolveActiveId,
+		sortConversations
+	} from '$lib/conversations';
 	import { fetchModels, streamChat } from '$lib/api';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
 
 	let settings = $state<AppSettings>(loadSettings());
 	let settingsDraft = $state<AppSettings>(loadSettings());
 	let conversations = $state<Conversation[]>(loadHistory());
-	let activeId = $state('');
+	let activeId = $state(loadActiveId());
 	let input = $state('');
 	let streaming = $state(false);
 	let error = $state('');
@@ -22,23 +37,31 @@
 	let models = $state<string[]>([]);
 	let abortController: AbortController | null = null;
 
-	const activeConversation = $derived(
-		conversations.find((c) => c.id === activeId) ?? conversations[0]
-	);
+	const sortedConversations = $derived(sortConversations(conversations));
+
+	const activeConversation = $derived(resolveActiveConversation(conversations, activeId));
 
 	onMount(() => {
-		if (!activeId && conversations[0]) {
-			activeId = conversations[0].id;
+		let needsPersist = false;
+		if (conversations.length === 0) {
+			const ensured = ensureConversations([]);
+			conversations = ensured.conversations;
+			activeId = ensured.activeId;
+			needsPersist = true;
+		} else {
+			activeId = resolveActiveId(conversations, activeId);
 		}
+		saveActiveId(activeId);
 		applyTheme(settings.darkMode);
 		void refreshModels();
-		if (conversations.length === 0) {
-			const chat = createConversation();
-			conversations = [chat];
-			activeId = chat.id;
+		if (needsPersist) {
 			persistHistory();
 		}
 	});
+
+	function persistActiveId() {
+		saveActiveId(activeId);
+	}
 
 	function persistSettings() {
 		saveSettings(settings);
@@ -55,28 +78,34 @@
 	}
 
 	function newChat() {
+		if (streaming) stopStreaming();
 		const chat = createConversation();
 		conversations = [chat, ...conversations];
 		activeId = chat.id;
 		error = '';
 		persistHistory();
+		persistActiveId();
 	}
 
 	function selectChat(id: string) {
+		if (id === activeId) return;
+		if (streaming) stopStreaming();
 		activeId = id;
 		error = '';
+		persistActiveId();
 	}
 
 	function deleteChat(id: string) {
-		conversations = conversations.filter((c) => c.id !== id);
-		if (conversations.length === 0) {
-			const chat = createConversation();
-			conversations = [chat];
-			activeId = chat.id;
+		if (streaming && activeId === id) stopStreaming();
+		const result = deleteConversation(conversations, id);
+		conversations = result.conversations;
+		if (result.activeId) {
+			activeId = result.activeId;
 		} else if (activeId === id) {
-			activeId = conversations[0].id;
+			activeId = conversations[0]?.id ?? '';
 		}
 		persistHistory();
+		persistActiveId();
 	}
 
 	async function refreshModels() {
@@ -180,7 +209,7 @@
 			<button class="primary-btn" onclick={newChat}>New</button>
 		</div>
 		<div class="conversation-list">
-			{#each conversations as conversation (conversation.id)}
+			{#each sortedConversations as conversation (conversation.id)}
 				<div class="conversation-item" class:active={conversation.id === activeId}>
 					<button class="conversation-select" onclick={() => selectChat(conversation.id)}>
 						{conversation.title}

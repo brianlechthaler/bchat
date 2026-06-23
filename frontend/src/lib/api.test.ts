@@ -127,4 +127,36 @@ describe('api', () => {
 		expect(chunks.length).toBeGreaterThan(0);
 		expect(fetchMock).toHaveBeenCalled();
 	});
+
+	it('streamChat sends the selected conversation history as request context', async () => {
+		const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+			const body = JSON.parse(String(init?.body)) as {
+				messages: { role: string; content: string }[];
+			};
+			expect(body.messages).toEqual([
+				{ role: 'user', content: 'first turn' },
+				{ role: 'assistant', content: 'first reply' },
+				{ role: 'user', content: 'second turn' }
+			]);
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(new TextEncoder().encode('data: {"content":"ok","done":true}\n\n'));
+					controller.close();
+				}
+			});
+			return new Response(stream, { status: 200 });
+		});
+
+		const messages = [
+			{ role: 'user' as const, content: 'first turn' },
+			{ role: 'assistant' as const, content: 'first reply' },
+			{ role: 'user' as const, content: 'second turn' }
+		];
+
+		for await (const chunk of streamChat(DEFAULT_SETTINGS, messages)) {
+			void chunk;
+		}
+
+		expect(fetchMock).toHaveBeenCalled();
+	});
 });
