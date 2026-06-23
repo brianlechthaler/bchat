@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker run --rm -v ${{ github.workspace }}/backend:/workspace/backend -w /workspace/backend rust:1.88-bookworm cargo fmt --check
+      - run: docker run --rm -v ${{ github.workspace }}/backend:/workspace/backend -w /workspace/backend rust:1.88-bookworm bash -lc "rustup component add rustfmt && cargo fmt --check"
 
   frontend:
     runs-on: ubuntu-latest
