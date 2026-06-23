@@ -21,19 +21,7 @@
 		onRefreshModels
 	}: Props = $props();
 
-	let draft = $state<AppSettings>({
-		provider: 'ollama',
-		ollamaUrl: '',
-		model: '',
-		selectedEndpointId: '',
-		endpoints: [],
-		llm: { temperature: 0.7, maxTokens: 2048, topP: 1, systemPrompt: '' },
-		darkMode: true
-	});
-
-	$effect.pre(() => {
-		draft = $state.snapshot(initialDraft);
-	});
+	let draft = $state(structuredClone(initialDraft));
 
 	function save() {
 		onSave(draft);

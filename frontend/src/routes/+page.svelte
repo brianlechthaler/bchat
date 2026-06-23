@@ -258,7 +258,7 @@
 {#if showSettings}
 	{#key `${settingsDraft.endpoints.length}:${settingsDraft.provider}:${settingsDraft.selectedEndpointId}`}
 		<SettingsModal
-			initialDraft={settingsDraft}
+			initialDraft={$state.snapshot(settingsDraft)}
 			{models}
 			onSave={onSettingsSave}
 			onClose={() => (showSettings = false)}
