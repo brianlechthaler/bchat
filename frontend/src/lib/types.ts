@@ -66,6 +66,20 @@ export function createEndpoint(name = 'OpenAI'): OpenAiEndpoint {
 	};
 }
 
+/** Ensure OpenAI provider has a valid selected endpoint when endpoints exist. */
+export function normalizeAppSettings(settings: AppSettings): AppSettings {
+	if (settings.provider !== 'openai' || settings.endpoints.length === 0) {
+		return settings;
+	}
+
+	const hasSelection = settings.endpoints.some((e) => e.id === settings.selectedEndpointId);
+	if (hasSelection) {
+		return settings;
+	}
+
+	return { ...settings, selectedEndpointId: settings.endpoints[0].id };
+}
+
 export function createConversation(title = 'New chat'): Conversation {
 	const now = Date.now();
 	return {
