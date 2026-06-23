@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from './types';
 
 const SETTINGS_KEY = 'bchat.settings';
 const HISTORY_KEY = 'bchat.history';
+const ACTIVE_ID_KEY = 'bchat.activeId';
 
 function readJson<T>(key: string, fallback: T): T {
 	if (!browser) return fallback;
@@ -43,6 +44,24 @@ export function loadHistory(): Conversation[] {
 
 export function saveHistory(conversations: Conversation[]): void {
 	writeJson(HISTORY_KEY, conversations);
+}
+
+export function loadActiveId(): string {
+	if (!browser) return '';
+	try {
+		return localStorage.getItem(ACTIVE_ID_KEY) ?? '';
+	} catch {
+		return '';
+	}
+}
+
+export function saveActiveId(id: string): void {
+	if (!browser) return;
+	if (!id) {
+		localStorage.removeItem(ACTIVE_ID_KEY);
+		return;
+	}
+	localStorage.setItem(ACTIVE_ID_KEY, id);
 }
 
 export function applyTheme(darkMode: boolean): void {
