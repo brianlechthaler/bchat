@@ -1,12 +1,30 @@
 services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      OLLAMA_URL: http://ollama:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      ollama:
+        condition: service_healthy
 
   frontend:
     build:
@@ -51,3 +69,4 @@ services:
 
 volumes:
   frontend_node_modules:
+  ollama_data:

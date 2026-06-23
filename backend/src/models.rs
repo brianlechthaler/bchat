@@ -72,6 +72,14 @@ fn default_ollama_url() -> String {
     "http://localhost:11434".to_string()
 }
 
+/// Use `OLLAMA_URL` when set (e.g. Docker Compose) so the backend can reach Ollama on the container network.
+pub fn resolve_ollama_url(client_url: &str) -> String {
+    std::env::var("OLLAMA_URL")
+        .ok()
+        .filter(|url| !url.is_empty())
+        .unwrap_or_else(|| client_url.to_string())
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ModelsQuery {
     pub provider: Provider,
