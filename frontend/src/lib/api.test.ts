@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fetchModels, streamChat } from './api';
-import { DEFAULT_SETTINGS } from './types';
+import { fetchModels, streamChat, fetchMcpTools, callMcpTool } from './api';
+import { DEFAULT_SETTINGS, createMcpServer } from './types';
 
 describe('api', () => {
 	beforeEach(() => {
@@ -179,5 +179,34 @@ describe('api', () => {
 		}
 
 		expect(fetchMock).toHaveBeenCalled();
+	});
+
+	it('fetchMcpTools returns tools from backend', async () => {
+		const server = createMcpServer('Mock');
+		server.command = 'python3';
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					tools: [{ name: 'echo', description: 'echo', input_schema: {} }]
+				}),
+				{ status: 200 }
+			)
+		);
+
+		const tools = await fetchMcpTools(server);
+		expect(tools[0].name).toBe('echo');
+	});
+
+	it('callMcpTool returns tool result', async () => {
+		const server = createMcpServer('Mock');
+		server.command = 'python3';
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			new Response(JSON.stringify({ result: { content: [{ text: 'ok' }] } }), {
+				status: 200
+			})
+		);
+
+		const result = await callMcpTool(server, 'echo', { text: 'hello' });
+		expect(result).toEqual({ content: [{ text: 'ok' }] });
 	});
 });

@@ -1,6 +1,8 @@
 mod app;
 mod chat;
 mod error;
+mod mcp;
+mod mcp_routes;
 mod models;
 mod providers;
 

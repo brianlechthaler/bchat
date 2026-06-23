@@ -1,4 +1,4 @@
-import type { AppSettings, ChatMessage, StreamChunk } from './types';
+import type { AppSettings, ChatMessage, McpServer, McpTool, StreamChunk } from './types';
 
 interface ChatRequestBody {
 	provider: string;
@@ -131,4 +131,53 @@ export async function* streamChat(
 			}
 		}
 	}
+}
+
+function buildMcpServerBody(server: McpServer) {
+	return {
+		id: server.id,
+		name: server.name,
+		command: server.command,
+		args: server.args
+	};
+}
+
+export async function fetchMcpTools(server: McpServer): Promise<McpTool[]> {
+	const response = await fetch('/api/mcp/tools', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ server: buildMcpServerBody(server) })
+	});
+
+	if (!response.ok) {
+		const err = await response.json().catch(() => ({ error: response.statusText }));
+		throw new Error(err.error ?? 'Failed to list MCP tools');
+	}
+
+	const data = (await response.json()) as { tools: McpTool[] };
+	return data.tools;
+}
+
+export async function callMcpTool(
+	server: McpServer,
+	tool: string,
+	arguments_: Record<string, unknown>
+): Promise<unknown> {
+	const response = await fetch('/api/mcp/call', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			server: buildMcpServerBody(server),
+			tool,
+			arguments: arguments_
+		})
+	});
+
+	if (!response.ok) {
+		const err = await response.json().catch(() => ({ error: response.statusText }));
+		throw new Error(err.error ?? 'MCP tool call failed');
+	}
+
+	const data = (await response.json()) as { result: unknown };
+	return data.result;
 }

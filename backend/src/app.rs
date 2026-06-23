@@ -3,6 +3,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 use crate::chat;
+use crate::mcp_routes;
 
 pub fn create_app() -> Router {
     let cors = CorsLayer::new()
@@ -12,6 +13,7 @@ pub fn create_app() -> Router {
 
     Router::new()
         .merge(chat::router())
+        .merge(mcp_routes::router())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
 }

@@ -4,8 +4,11 @@ import {
 	DEFAULT_SYSTEM_PROMPT,
 	createConversation,
 	createEndpoint,
+	createMcpServer,
 	effectiveSystemPrompt,
-	normalizeAppSettings
+	normalizeAppSettings,
+	type AppSettings,
+	type McpServer
 } from './types';
 
 describe('types', () => {
@@ -24,6 +27,18 @@ describe('types', () => {
 		const endpoint = createEndpoint('My API');
 		expect(endpoint.name).toBe('My API');
 		expect(endpoint.baseUrl).toContain('openai.com');
+	});
+
+	it('creates an MCP server config', () => {
+		const server = createMcpServer('Filesystem');
+		expect(server.name).toBe('Filesystem');
+		expect(server.args).toEqual([]);
+	});
+
+	it('normalizes missing mcp servers to an empty array', () => {
+		const settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)) as AppSettings;
+		delete (settings as { mcpServers?: McpServer[] }).mcpServers;
+		expect(normalizeAppSettings(settings).mcpServers).toEqual([]);
 	});
 
 	it('normalizes openai settings to select the first endpoint when none is selected', () => {

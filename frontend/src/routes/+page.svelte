@@ -13,6 +13,7 @@
 	import {
 		createConversation,
 		createEndpoint,
+		createMcpServer,
 		normalizeAppSettings,
 		type AppSettings,
 		type Conversation
@@ -27,6 +28,7 @@
 	import { fetchModels, streamChat } from '$lib/api';
 	import { formatTokenSpeed, estimateTokensPerSecond } from '$lib/tokenSpeed';
 	import SettingsModal from '$lib/components/SettingsModal.svelte';
+	import McpPanel from '$lib/components/McpPanel.svelte';
 
 	let settings = $state<AppSettings>(loadSettings());
 	let settingsDraft = $state<AppSettings>(loadSettings());
@@ -241,6 +243,7 @@
 				</div>
 			{/each}
 		</div>
+		<McpPanel {settings} />
 	</aside>
 
 	<main class="chat-main">
@@ -325,6 +328,19 @@
 					endpoints: settingsDraft.endpoints.filter((e) => e.id !== id),
 					selectedEndpointId:
 						settingsDraft.selectedEndpointId === id ? '' : settingsDraft.selectedEndpointId
+				};
+			}}
+			onAddMcpServer={() => {
+				const server = createMcpServer(`MCP ${settingsDraft.mcpServers.length + 1}`);
+				settingsDraft = {
+					...settingsDraft,
+					mcpServers: [...settingsDraft.mcpServers, server]
+				};
+			}}
+			onDeleteMcpServer={(id) => {
+				settingsDraft = {
+					...settingsDraft,
+					mcpServers: settingsDraft.mcpServers.filter((s) => s.id !== id)
 				};
 			}}
 			onRefreshModels={refreshModels}

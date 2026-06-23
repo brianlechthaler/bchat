@@ -9,6 +9,8 @@
 		onClose: () => void;
 		onAddEndpoint: () => void;
 		onDeleteEndpoint: (id: string) => void;
+		onAddMcpServer: () => void;
+		onDeleteMcpServer: (id: string) => void;
 		onRefreshModels: () => Promise<void>;
 	}
 
@@ -19,6 +21,8 @@
 		onClose,
 		onAddEndpoint,
 		onDeleteEndpoint,
+		onAddMcpServer,
+		onDeleteMcpServer,
 		onRefreshModels
 	}: Props = $props();
 
@@ -156,6 +160,38 @@
 				<input type="checkbox" bind:checked={draft.darkMode} />
 				Dark mode
 			</label>
+
+			<div style="display: grid; gap: 0.75rem;">
+				<div style="display: flex; justify-content: space-between; align-items: center;">
+					<strong>MCP Servers</strong>
+					<button type="button" class="ghost-btn" onclick={onAddMcpServer}>Add server</button>
+				</div>
+				{#each draft.mcpServers as server (server.id)}
+					<div class="endpoint-card">
+						<label>
+							Name
+							<input bind:value={server.name} />
+						</label>
+						<label>
+							Command
+							<input bind:value={server.command} placeholder="npx" />
+						</label>
+						<label>
+							Args (space-separated)
+							<input
+								value={server.args.join(' ')}
+								oninput={(e) => {
+									server.args = e.currentTarget.value.split(' ').filter(Boolean);
+								}}
+								placeholder="-y @modelcontextprotocol/server-filesystem /path"
+							/>
+						</label>
+						<button type="button" class="ghost-btn" onclick={() => onDeleteMcpServer(server.id)}>
+							Remove
+						</button>
+					</div>
+				{/each}
+			</div>
 		</div>
 
 		<div class="modal-actions">
