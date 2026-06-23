@@ -92,7 +92,7 @@
 	}
 
 	function openSettings() {
-		settingsDraft = structuredClone(settings);
+		settingsDraft = $state.snapshot(settings);
 		showSettings = true;
 	}
 
