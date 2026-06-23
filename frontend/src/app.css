@@ -279,6 +279,17 @@ button {
 	color: var(--text);
 }
 
+.settings-hint {
+	display: grid;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	padding: 0.65rem 0.75rem;
+	border-radius: 0.5rem;
+	border: 1px solid var(--border);
+	background: var(--bg);
+}
+
 .endpoint-card {
 	border: 1px solid var(--border);
 	border-radius: 0.5rem;

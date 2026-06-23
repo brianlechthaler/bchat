@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
 	DEFAULT_SETTINGS,
+	DEFAULT_SYSTEM_PROMPT,
 	createConversation,
 	createEndpoint,
+	effectiveSystemPrompt,
 	normalizeAppSettings
 } from './types';
 
@@ -38,5 +40,16 @@ describe('types', () => {
 
 	it('leaves ollama settings unchanged during normalization', () => {
 		expect(normalizeAppSettings(DEFAULT_SETTINGS)).toEqual(DEFAULT_SETTINGS);
+	});
+
+	it('exposes the default system prompt constant', () => {
+		expect(DEFAULT_SYSTEM_PROMPT).toBe('');
+		expect(DEFAULT_SETTINGS.llm.systemPrompt).toBe(DEFAULT_SYSTEM_PROMPT);
+	});
+
+	it('resolves the effective system prompt', () => {
+		expect(effectiveSystemPrompt('')).toBe(DEFAULT_SYSTEM_PROMPT);
+		expect(effectiveSystemPrompt('  ')).toBe(DEFAULT_SYSTEM_PROMPT);
+		expect(effectiveSystemPrompt('be helpful')).toBe('be helpful');
 	});
 });
