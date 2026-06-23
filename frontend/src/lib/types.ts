@@ -40,6 +40,7 @@ export interface Conversation {
 export interface StreamChunk {
 	content: string;
 	done: boolean;
+	tokens_per_second?: number;
 }
 
 export const DEFAULT_SYSTEM_PROMPT = '';

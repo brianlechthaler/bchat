@@ -86,6 +86,7 @@ async fn chat(
                         .send(StreamChunk {
                             content: format!("stream error: {e}"),
                             done: true,
+                            tokens_per_second: None,
                         })
                         .await;
                     return;
@@ -110,6 +111,7 @@ async fn chat(
             .send(StreamChunk {
                 content: String::new(),
                 done: true,
+                tokens_per_second: None,
             })
             .await;
     });
@@ -163,11 +165,21 @@ fn parse_provider_line(provider: &Provider, line: &str) -> Option<StreamChunk> {
     }
 }
 
+fn compute_tokens_per_second(eval_count: u64, eval_duration_ns: u64) -> Option<f32> {
+    if eval_count == 0 || eval_duration_ns == 0 {
+        return None;
+    }
+    let seconds = eval_duration_ns as f64 / 1_000_000_000.0;
+    Some((eval_count as f64 / seconds) as f32)
+}
+
 fn parse_ollama_line(line: &str) -> Option<StreamChunk> {
     #[derive(Deserialize)]
     struct OllamaChunk {
         message: Option<OllamaMessage>,
         done: Option<bool>,
+        eval_count: Option<u64>,
+        eval_duration: Option<u64>,
     }
 
     #[derive(Deserialize)]
@@ -178,10 +190,18 @@ fn parse_ollama_line(line: &str) -> Option<StreamChunk> {
     let parsed: OllamaChunk = serde_json::from_str(line).ok()?;
     let content = parsed.message.and_then(|m| m.content).unwrap_or_default();
     let done = parsed.done.unwrap_or(false);
+    let tokens_per_second = match (done, parsed.eval_count, parsed.eval_duration) {
+        (true, Some(count), Some(duration)) => compute_tokens_per_second(count, duration),
+        _ => None,
+    };
     if content.is_empty() && !done {
         return None;
     }
-    Some(StreamChunk { content, done })
+    Some(StreamChunk {
+        content,
+        done,
+        tokens_per_second,
+    })
 }
 
 fn parse_openai_line(line: &str) -> Option<StreamChunk> {
@@ -190,6 +210,7 @@ fn parse_openai_line(line: &str) -> Option<StreamChunk> {
             return Some(StreamChunk {
                 content: String::new(),
                 done: true,
+                tokens_per_second: None,
             });
         }
         return parse_openai_data(data);
@@ -221,7 +242,11 @@ fn parse_openai_data(data: &str) -> Option<StreamChunk> {
     if content.is_empty() && !done {
         return None;
     }
-    Some(StreamChunk { content, done })
+    Some(StreamChunk {
+        content,
+        done,
+        tokens_per_second: None,
+    })
 }
 
 #[cfg(test)]
@@ -267,6 +292,20 @@ mod tests {
         let chunk = parse_ollama_line(line).expect("chunk");
         assert_eq!(chunk.content, "hello");
         assert!(!chunk.done);
+        assert!(chunk.tokens_per_second.is_none());
+    }
+
+    #[test]
+    fn parse_ollama_done_includes_token_speed() {
+        let line = r#"{"message":{"role":"assistant","content":""},"done":true,"eval_count":10,"eval_duration":500000000}"#;
+        let chunk = parse_ollama_line(line).expect("chunk");
+        assert!(chunk.done);
+        assert_eq!(chunk.tokens_per_second, Some(20.0));
+    }
+
+    #[test]
+    fn compute_tokens_per_second_handles_zero_duration() {
+        assert_eq!(compute_tokens_per_second(10, 0), None);
     }
 
     #[test]

@@ -103,4 +103,6 @@ pub struct ModelsResponse {
 pub struct StreamChunk {
     pub content: String,
     pub done: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tokens_per_second: Option<f32>,
 }
