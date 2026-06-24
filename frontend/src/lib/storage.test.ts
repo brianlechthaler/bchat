@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
 	loadSettings,
 	saveSettings,
@@ -71,5 +71,26 @@ describe('storage', () => {
 		};
 		localStorage.setItem('bchat.settings', JSON.stringify(stored));
 		expect(loadSettings().selectedEndpointId).toBe(endpoint.id);
+	});
+
+	it('overrides stale ollama localStorage when compose env defaults are set', () => {
+		vi.stubEnv('VITE_DEFAULT_PROVIDER', 'openai');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_NAME', 'vLLM');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_BASE_URL', 'http://vllm:8000/v1');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_API_KEY', 'EMPTY');
+		vi.stubEnv('VITE_DEFAULT_MODEL', 'Qwen/Qwen2.5-0.5B-Instruct');
+
+		localStorage.setItem(
+			'bchat.settings',
+			JSON.stringify({ ...DEFAULT_SETTINGS, provider: 'ollama', model: 'llama3' })
+		);
+
+		const settings = loadSettings();
+		expect(settings.provider).toBe('openai');
+		expect(settings.model).toBe('Qwen/Qwen2.5-0.5B-Instruct');
+		expect(settings.endpoints[0]?.baseUrl).toBe('http://vllm:8000/v1');
+		expect(JSON.parse(localStorage.getItem('bchat.settings') ?? '{}').provider).toBe('openai');
+
+		vi.unstubAllEnvs();
 	});
 });

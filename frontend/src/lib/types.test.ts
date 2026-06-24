@@ -3,6 +3,7 @@ import {
 	createDefaultSettings,
 	DEFAULT_SETTINGS,
 	DEFAULT_SYSTEM_PROMPT,
+	applyComposeDefaults,
 	createConversation,
 	createEndpoint,
 	createMcpServer,
@@ -75,6 +76,28 @@ describe('types', () => {
 
 	it('leaves ollama settings unchanged during normalization', () => {
 		expect(normalizeAppSettings(DEFAULT_SETTINGS)).toEqual(DEFAULT_SETTINGS);
+	});
+
+	it('applyComposeDefaults is a no-op without compose env vars', () => {
+		const stored = { ...DEFAULT_SETTINGS, provider: 'ollama' as const };
+		expect(applyComposeDefaults(stored)).toEqual(stored);
+	});
+
+	it('applyComposeDefaults overrides stale ollama localStorage when compose env is set', () => {
+		vi.stubEnv('VITE_DEFAULT_PROVIDER', 'openai');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_NAME', 'vLLM');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_BASE_URL', 'http://vllm:8000/v1');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_API_KEY', 'EMPTY');
+		vi.stubEnv('VITE_DEFAULT_MODEL', 'Qwen/Qwen2.5-0.5B-Instruct');
+
+		const stale = { ...DEFAULT_SETTINGS, provider: 'ollama' as const, model: 'llama3' };
+		const merged = applyComposeDefaults(stale);
+
+		expect(merged.provider).toBe('openai');
+		expect(merged.model).toBe('Qwen/Qwen2.5-0.5B-Instruct');
+		expect(merged.endpoints[0]?.baseUrl).toBe('http://vllm:8000/v1');
+
+		vi.unstubAllEnvs();
 	});
 
 	it('exposes the default system prompt constant', () => {

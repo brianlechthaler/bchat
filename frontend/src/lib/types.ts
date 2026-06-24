@@ -83,6 +83,31 @@ function readEnvProvider(): Provider | undefined {
 	return undefined;
 }
 
+/** True when Docker Compose injects VITE_DEFAULT_PROVIDER (vLLM / custom stack). */
+export function hasComposeDefaults(): boolean {
+	return readEnvProvider() !== undefined;
+}
+
+/** Apply compose env defaults over stale localStorage for provider routing. */
+export function applyComposeDefaults(stored: AppSettings): AppSettings {
+	const defaults = createDefaultSettings();
+	if (!hasComposeDefaults()) {
+		return stored;
+	}
+
+	const endpoints = defaults.endpoints.length > 0 ? defaults.endpoints : stored.endpoints;
+	const selectedEndpointId =
+		defaults.endpoints.length > 0 ? defaults.selectedEndpointId : stored.selectedEndpointId;
+
+	return {
+		...stored,
+		provider: defaults.provider,
+		model: defaults.model || stored.model,
+		endpoints,
+		selectedEndpointId
+	};
+}
+
 /** Defaults for first-run settings; honors VITE_* env vars from Docker Compose. */
 export function createDefaultSettings(): AppSettings {
 	const settings: AppSettings = {
