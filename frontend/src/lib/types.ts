@@ -59,7 +59,7 @@ export interface StreamChunk {
 
 export const DEFAULT_SYSTEM_PROMPT = '';
 
-export const DEFAULT_SETTINGS: AppSettings = {
+const BASE_DEFAULT_SETTINGS: AppSettings = {
 	provider: 'ollama',
 	ollamaUrl: 'http://localhost:11434',
 	model: '',
@@ -74,6 +74,51 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	},
 	darkMode: true
 };
+
+function readEnvProvider(): Provider | undefined {
+	const value = import.meta.env.VITE_DEFAULT_PROVIDER;
+	if (value === 'ollama' || value === 'openai') {
+		return value;
+	}
+	return undefined;
+}
+
+/** Defaults for first-run settings; honors VITE_* env vars from Docker Compose. */
+export function createDefaultSettings(): AppSettings {
+	const settings: AppSettings = {
+		...BASE_DEFAULT_SETTINGS,
+		llm: { ...BASE_DEFAULT_SETTINGS.llm }
+	};
+
+	const provider = readEnvProvider();
+	if (provider) {
+		settings.provider = provider;
+	}
+
+	const model = import.meta.env.VITE_DEFAULT_MODEL;
+	if (typeof model === 'string' && model.trim() !== '') {
+		settings.model = model;
+	}
+
+	const baseUrl = import.meta.env.VITE_DEFAULT_OPENAI_BASE_URL;
+	if (settings.provider === 'openai' && typeof baseUrl === 'string' && baseUrl.trim() !== '') {
+		const endpoint = createEndpoint(
+			typeof import.meta.env.VITE_DEFAULT_OPENAI_NAME === 'string' &&
+				import.meta.env.VITE_DEFAULT_OPENAI_NAME.trim() !== ''
+				? import.meta.env.VITE_DEFAULT_OPENAI_NAME
+				: 'OpenAI-compatible'
+		);
+		endpoint.baseUrl = baseUrl;
+		const apiKey = import.meta.env.VITE_DEFAULT_OPENAI_API_KEY;
+		endpoint.apiKey = typeof apiKey === 'string' ? apiKey : '';
+		settings.endpoints = [endpoint];
+		settings.selectedEndpointId = endpoint.id;
+	}
+
+	return settings;
+}
+
+export const DEFAULT_SETTINGS: AppSettings = createDefaultSettings();
 
 export function effectiveSystemPrompt(prompt: string): string {
 	return prompt.trim() === '' ? DEFAULT_SYSTEM_PROMPT : prompt;

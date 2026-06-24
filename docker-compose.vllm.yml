@@ -1,0 +1,90 @@
+# vLLM stack — OpenAI-compatible local inference instead of Ollama.
+# Usage: docker compose -f docker-compose.vllm.yml up --build
+#
+# Optional: set HUGGING_FACE_HUB_TOKEN for gated models, and VLLM_MODEL to override
+# the default small instruct model used for quickstart.
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    gpus: all
+    ports:
+      - "8000:8000"
+    volumes:
+      - vllm_cache:/root/.cache/huggingface
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    command:
+      - --model
+      - ${VLLM_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      vllm:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://backend:8080
+      VITE_DEFAULT_PROVIDER: openai
+      VITE_DEFAULT_OPENAI_NAME: vLLM
+      VITE_DEFAULT_OPENAI_BASE_URL: http://vllm:8000/v1
+      VITE_DEFAULT_OPENAI_API_KEY: ${VLLM_API_KEY:-EMPTY}
+      VITE_DEFAULT_MODEL: ${VLLM_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/workspace
+      - frontend_node_modules:/workspace/node_modules
+
+  test-backend:
+    image: rust:1.88-bookworm
+    working_dir: /workspace
+    volumes:
+      - ./backend:/workspace
+    command: cargo test
+
+  test-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace
+      - frontend_node_modules:/workspace/node_modules
+    command: npm run test:coverage
+
+  lint-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace
+      - frontend_node_modules:/workspace/node_modules
+    command: sh -c "npm install && npm run lint && npm run format && npx svelte-kit sync && npm run check"
+
+volumes:
+  frontend_node_modules:
+  vllm_cache:

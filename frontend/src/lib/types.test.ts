@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+	createDefaultSettings,
 	DEFAULT_SETTINGS,
 	DEFAULT_SYSTEM_PROMPT,
 	createConversation,
@@ -15,6 +16,25 @@ describe('types', () => {
 	it('creates default settings with ollama provider', () => {
 		expect(DEFAULT_SETTINGS.provider).toBe('ollama');
 		expect(DEFAULT_SETTINGS.ollamaUrl).toContain('11434');
+	});
+
+	it('creates docker defaults for vllm when env vars are set', () => {
+		vi.stubEnv('VITE_DEFAULT_PROVIDER', 'openai');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_NAME', 'vLLM');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_BASE_URL', 'http://vllm:8000/v1');
+		vi.stubEnv('VITE_DEFAULT_OPENAI_API_KEY', 'EMPTY');
+		vi.stubEnv('VITE_DEFAULT_MODEL', 'Qwen/Qwen2.5-0.5B-Instruct');
+
+		const settings = createDefaultSettings();
+		expect(settings.provider).toBe('openai');
+		expect(settings.model).toBe('Qwen/Qwen2.5-0.5B-Instruct');
+		expect(settings.endpoints).toHaveLength(1);
+		expect(settings.endpoints[0]?.name).toBe('vLLM');
+		expect(settings.endpoints[0]?.baseUrl).toBe('http://vllm:8000/v1');
+		expect(settings.endpoints[0]?.apiKey).toBe('EMPTY');
+		expect(settings.selectedEndpointId).toBe(settings.endpoints[0]?.id);
+
+		vi.unstubAllEnvs();
 	});
 
 	it('creates a conversation with empty messages', () => {

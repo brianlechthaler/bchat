@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import type { AppSettings, Conversation } from './types';
-import { DEFAULT_SETTINGS, normalizeAppSettings } from './types';
+import { createDefaultSettings, normalizeAppSettings } from './types';
 
 const SETTINGS_KEY = 'bchat.settings';
 const HISTORY_KEY = 'bchat.history';
@@ -23,7 +23,7 @@ function writeJson<T>(key: string, value: T): void {
 }
 
 export function loadSettings(): AppSettings {
-	return normalizeAppSettings(readJson(SETTINGS_KEY, DEFAULT_SETTINGS));
+	return normalizeAppSettings(readJson(SETTINGS_KEY, createDefaultSettings()));
 }
 
 export function saveSettings(settings: AppSettings): void {
